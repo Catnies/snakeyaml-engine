@@ -218,10 +218,9 @@ public class Serializer {
             }
 
             /**
-             * 修复列表中遇到Map节点时, 注释混乱:
-             * 1. 当遇到Map节点时主动Peek第一个元素, 也就是 String;
-             * 2. 把行前注释提取出来, 提前塞给 Emitter;
-             * 3. 然后Emitter的 {@link org.snakeyaml.engine.v2.emitter.Emitter.ExpectBlockSequenceItem} 会先收到行后注释, 结合 ExpectBlockSequenceItem 的修改, 可以使其打印在 - 的上方.
+             * 修复列表中遇到Map节点时, 注释混乱: 1. 当遇到Map节点时主动Peek第一个元素, 也就是 String; 2. 把行前注释提取出来, 提前塞给 Emitter;
+             * 3. 然后Emitter的 {@link org.snakeyaml.engine.v2.emitter.Emitter.ExpectBlockSequenceItem}
+             * 会先收到行后注释, 结合 ExpectBlockSequenceItem 的修改, 可以使其打印在 - 的上方.
              */
             if (!mappingNode.getValue().isEmpty()) {
               Node firstKey = mappingNode.getValue().get(0).getKeyNode();

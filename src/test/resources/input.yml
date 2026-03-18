@@ -12,16 +12,16 @@ test: &test
   quoted: "So does this
               quoted 
           scalar.\n"
-  string_literal: |
+  string_literal: | # 注释注释
     123
     321
-  string_literal_remove_end_newline: |-
+  string_literal_remove_end_newline: |- # 注释注释
     123
     321
-  string_folded: >
+  string_folded: > # 注释注释
     123
     321
-  string_folded_remove_end_newline: >-
+  string_folded_remove_end_newline: >- # 注释注释
     123
     321
   long: 1000
