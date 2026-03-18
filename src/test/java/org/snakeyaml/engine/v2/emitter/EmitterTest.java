@@ -147,7 +147,8 @@ public class EmitterTest {
     emitter.emit(new DocumentStartEvent(false, Optional.empty(), new HashMap<>(), Optional.empty(),
         Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.empty(), new ImplicitTuple(true, false),
-        burger + halfBurger, ScalarStyle.DOUBLE_QUOTED, Optional.empty(), Optional.empty()));
+        burger + halfBurger, ScalarStyle.DOUBLE_QUOTED, Optional.empty(), Optional.empty(),
+        Optional.empty()));
     String expected = "! \"\\U0001f354\\ud83c\"";
     assertEquals(expected, output.toString());
   }

@@ -29,18 +29,22 @@ public class ScalarNode extends Node {
   private final ScalarStyle style;
   private final String value;
 
+  private final Optional<String> rawText;
+
   public ScalarNode(Tag tag, boolean resolved, String value, ScalarStyle style,
-      Optional<Mark> startMark, Optional<Mark> endMark) {
+      Optional<Mark> startMark, Optional<Mark> endMark, Optional<String> rawText) {
     super(tag, startMark, endMark);
     Objects.requireNonNull(value, "value in a Node is required.");
     this.value = value;
     Objects.requireNonNull(style, "Scalar style must be provided.");
     this.style = style;
     this.resolved = resolved;
+    Objects.requireNonNull(rawText);
+    this.rawText = rawText;
   }
 
   public ScalarNode(Tag tag, String value, ScalarStyle style) {
-    this(tag, true, value, style, Optional.empty(), Optional.empty());
+    this(tag, true, value, style, Optional.empty(), Optional.empty(), Optional.empty());
   }
 
   /**
@@ -67,6 +71,10 @@ public class ScalarNode extends Node {
    */
   public String getValue() {
     return value;
+  }
+
+  public Optional<String> getRawText() {
+    return rawText;
   }
 
   public String toString() {

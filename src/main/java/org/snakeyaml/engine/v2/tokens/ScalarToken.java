@@ -24,19 +24,23 @@ public final class ScalarToken extends Token {
   private final boolean plain;
   private final ScalarStyle style;
 
+  // 保存原始文本
+  private Optional<String> rawText;
+
   public ScalarToken(String value, boolean plain, Optional<Mark> startMark,
       Optional<Mark> endMark) {
-    this(value, plain, ScalarStyle.PLAIN, startMark, endMark);
+    this(value, plain, ScalarStyle.PLAIN, startMark, endMark, Optional.empty());
   }
 
   public ScalarToken(String value, boolean plain, ScalarStyle style, Optional<Mark> startMark,
-      Optional<Mark> endMark) {
+      Optional<Mark> endMark, Optional<String> rawText) {
     super(startMark, endMark);
     Objects.requireNonNull(value);
     this.value = value;
     this.plain = plain;
     Objects.requireNonNull(style);
     this.style = style;
+    this.rawText = rawText;
   }
 
   public boolean isPlain() {
@@ -51,6 +55,10 @@ public final class ScalarToken extends Token {
     return this.style;
   }
 
+  public Optional<String> getRawText() {
+    return rawText;
+  }
+
   @Override
   public Token.ID getTokenId() {
     return ID.Scalar;
@@ -58,6 +66,7 @@ public final class ScalarToken extends Token {
 
   @Override
   public String toString() {
-    return getTokenId().toString() + " plain=" + plain + " style=" + style + " value=" + value;
+    return getTokenId().toString() + " plain=" + plain + " style=" + style + " value=" + value
+        + rawText.map(s -> " rawText=" + s).orElse("");
   }
 }

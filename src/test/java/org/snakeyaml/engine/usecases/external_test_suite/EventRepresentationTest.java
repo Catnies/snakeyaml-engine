@@ -115,17 +115,27 @@ class EventRepresentationTest {
   @Test
   @DisplayName("Represent ScalarEvent")
   void testScalarEvent() {
-    valid(new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
-        new ImplicitTuple(false, false), "v1", ScalarStyle.FOLDED), "=VAL &a <ttt> >v1");
+    valid(
+        new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
+            new ImplicitTuple(false, false), "v1", ScalarStyle.FOLDED, Optional.empty()),
+        "=VAL &a <ttt> >v1");
 
-    invalid(new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
-        new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN), "=VAL <ttt> >v1");
-    invalid(new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
-        new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN), "=VAL &a >v1");
-    invalid(new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
-        new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN), "=VAL &a <ttt>");
-    invalid(new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
-        new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN), "=VAL &a <ttt> |v1");
+    invalid(
+        new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
+            new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN, Optional.empty()),
+        "=VAL <ttt> >v1");
+    invalid(
+        new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
+            new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN, Optional.empty()),
+        "=VAL &a >v1");
+    invalid(
+        new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
+            new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN, Optional.empty()),
+        "=VAL &a <ttt>");
+    invalid(
+        new ScalarEvent(Optional.of(new Anchor("a")), Optional.of("ttt"),
+            new ImplicitTuple(false, false), "v1", ScalarStyle.PLAIN, Optional.empty()),
+        "=VAL &a <ttt> |v1");
   }
 
   @Test

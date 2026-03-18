@@ -15,6 +15,7 @@ package org.snakeyaml.engine.v2.serializer;
 
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.comments.CommentLine;
+import org.snakeyaml.engine.v2.comments.CommentType;
 import org.snakeyaml.engine.v2.common.Anchor;
 import org.snakeyaml.engine.v2.emitter.Emitable;
 import org.snakeyaml.engine.v2.events.AliasEvent;
@@ -41,14 +42,7 @@ import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
 import org.snakeyaml.engine.v2.util.MergeUtils;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Transform a Node Graph to Event stream and allow provided {@link Emitable} to present the
@@ -194,7 +188,7 @@ public class Serializer {
           ImplicitTuple tuple = new ImplicitTuple(node.getTag().equals(detectedTag),
               node.getTag().equals(defaultTag));
           ScalarEvent event = new ScalarEvent(tAlias, Optional.of(node.getTag().getValue()), tuple,
-              scalarNode.getValue(), scalarNode.getScalarStyle());
+              scalarNode.getValue(), scalarNode.getScalarStyle(), scalarNode.getRawText());
           this.emitable.emit(event);
           serializeComments(node.getInLineComments());
           serializeComments(node.getEndComments());
@@ -222,15 +216,33 @@ public class Serializer {
             if (this.dereferenceAliases && mappingNode.hasMergeTag()) {
               map = mergeUtils.flatten(mappingNode);
             }
-            this.emitable
-                .emit(new MappingStartEvent(tAlias, Optional.of(mappingNode.getTag().getValue()),
-                    implicitM, mappingNode.getFlowStyle(), Optional.empty(), Optional.empty()));
+
+            /**
+             * 修复列表中遇到Map节点时, 注释混乱:
+             * 1. 当遇到Map节点时主动Peek第一个元素, 也就是 String;
+             * 2. 把行前注释提取出来, 提前塞给 Emitter;
+             * 3. 然后Emitter的 {@link org.snakeyaml.engine.v2.emitter.Emitter.ExpectBlockSequenceItem} 会先收到行后注释, 结合 ExpectBlockSequenceItem 的修改, 可以使其打印在 - 的上方.
+             */
+            if (!mappingNode.getValue().isEmpty()) {
+              Node firstKey = mappingNode.getValue().get(0).getKeyNode();
+              // 提前发送首个 Key 的块级注释
+              if (firstKey.getBlockComments() != null) {
+                for (CommentLine c : firstKey.getBlockComments()) {
+                  this.emitable.emit(new CommentEvent(c.getCommentType(), c.getValue(), c.getStartMark(), c.getEndMark()));
+                }
+                firstKey.setBlockComments(null); // 清空, 防止后面重复发送
+              }
+            }
+
+            this.emitable.emit(new MappingStartEvent(tAlias, Optional.of(mappingNode.getTag().getValue()), implicitM, mappingNode.getFlowStyle(), Optional.empty(), Optional.empty()));
+
             for (NodeTuple entry : map) {
               Node key = entry.getKeyNode();
               Node value = entry.getValueNode();
               serializeNode(key);
               serializeNode(value);
             }
+
             this.emitable.emit(new MappingEndEvent());
             serializeComments(node.getInLineComments());
             serializeComments(node.getEndComments());

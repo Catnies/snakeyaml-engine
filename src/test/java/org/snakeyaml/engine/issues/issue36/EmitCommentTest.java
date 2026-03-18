@@ -47,7 +47,7 @@ public class EmitCommentTest {
     emitter.emit(
         new CommentEvent(CommentType.BLOCK, "Hello world!", Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.empty(), new ImplicitTuple(true, true),
-        "This is the scalar", ScalarStyle.DOUBLE_QUOTED));
+        "This is the scalar", ScalarStyle.DOUBLE_QUOTED, Optional.empty()));
     emitter.emit(new DocumentEndEvent(false));
     emitter.emit(new StreamEndEvent());
 

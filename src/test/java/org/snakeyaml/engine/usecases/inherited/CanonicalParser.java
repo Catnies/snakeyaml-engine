@@ -104,7 +104,7 @@ public class CanonicalParser implements Parser {
       if (scanner.checkToken(Token.ID.Scalar)) {
         ScalarToken token = (ScalarToken) scanner.next();
         events.add(new ScalarEvent(anchor, tag, new ImplicitTuple(false, false), token.getValue(),
-            ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+            ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), token.getRawText()));
       } else if (scanner.checkToken(Token.ID.FlowSequenceStart)) {
         events.add(new SequenceStartEvent(anchor, Optional.of(Tag.SEQ.getValue()), false,
             FlowStyle.AUTO, Optional.empty(), Optional.empty()));

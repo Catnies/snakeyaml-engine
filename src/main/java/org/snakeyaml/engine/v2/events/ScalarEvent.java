@@ -35,8 +35,11 @@ public final class ScalarEvent extends NodeEvent {
   // and non-plain style correspondingly.
   private final ImplicitTuple implicit;
 
+  private final Optional<String> rawText;
+
   public ScalarEvent(Optional<Anchor> anchor, Optional<String> tag, ImplicitTuple implicit,
-      String value, ScalarStyle style, Optional<Mark> startMark, Optional<Mark> endMark) {
+      String value, ScalarStyle style, Optional<Mark> startMark, Optional<Mark> endMark,
+      Optional<String> rawText) {
     super(anchor, startMark, endMark);
     Objects.requireNonNull(tag);
     this.tag = tag;
@@ -45,11 +48,13 @@ public final class ScalarEvent extends NodeEvent {
     this.value = value;
     Objects.requireNonNull(style);
     this.style = style;
+    Objects.requireNonNull(rawText);
+    this.rawText = rawText;
   }
 
   public ScalarEvent(Optional<Anchor> anchor, Optional<String> tag, ImplicitTuple implicit,
-      String value, ScalarStyle style) {
-    this(anchor, tag, implicit, value, style, Optional.empty(), Optional.empty());
+      String value, ScalarStyle style, Optional<String> rawText) {
+    this(anchor, tag, implicit, value, style, Optional.empty(), Optional.empty(), rawText);
   }
 
   /**
@@ -101,6 +106,10 @@ public final class ScalarEvent extends NodeEvent {
   @Override
   public ID getEventId() {
     return ID.Scalar;
+  }
+
+  public Optional<String> getRawText() {
+    return rawText;
   }
 
   public boolean isPlain() {

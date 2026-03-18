@@ -1525,9 +1525,12 @@ public final class ScannerImpl implements Scanner {
   private List<Token> scanBlockScalar(ScalarStyle style) {
     // See the specification for details.
     StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder rawBuilder = new StringBuilder();
     Optional<Mark> startMark = reader.getMark();
     // Scan the header.
     reader.forward();
+    // 这里是补全 |- 的开头文本
+    rawBuilder.append(style.toString()).append(reader.peek() == 45 ? "-" : "").append("\n");
     Chomping chomping = scanBlockScalarIndicators(startMark);
     CommentToken commentToken = scanBlockScalarIgnoredLine(startMark);
 
@@ -1558,6 +1561,7 @@ public final class ScannerImpl implements Scanner {
     Optional<String> lineBreakOpt = Optional.empty();
     // Scan the inner part of the block scalar.
     while (this.reader.getColumn() == blockIndent && reader.peek() != 0) {
+      rawBuilder.append(breaks);
       stringBuilder.append(breaks);
       boolean leadingNonSpace = " \t".indexOf(reader.peek()) == -1;
       int length = 0;
@@ -1570,7 +1574,9 @@ public final class ScannerImpl implements Scanner {
         }
         length++;
       }
-      stringBuilder.append(reader.prefixForward(length));
+      String prefixForward = reader.prefixForward(length);
+      rawBuilder.append(prefixForward);
+      stringBuilder.append(prefixForward);
       lineBreakOpt = scanLineBreak();
       BreakIntentHolder brme = scanBlockScalarBreaks(blockIndent);
       breaks = brme.breaks;
@@ -1583,9 +1589,11 @@ public final class ScannerImpl implements Scanner {
         if (style == ScalarStyle.FOLDED && "\n".equals(lineBreakOpt.orElse("")) && leadingNonSpace
             && " \t".indexOf(reader.peek()) == -1) {
           if (breaks.isEmpty()) {
+            rawBuilder.append('\n');
             stringBuilder.append(' ');
           }
         } else {
+          rawBuilder.append(lineBreakOpt.orElse(""));
           stringBuilder.append(lineBreakOpt.orElse(""));
         }
       } else {
@@ -1599,11 +1607,12 @@ public final class ScannerImpl implements Scanner {
     }
     if (chomping.value == Indicator.KEEP) {
       // any trailing empty lines are considered to be part of the scalar’s content
+      rawBuilder.append(breaks);
       stringBuilder.append(breaks);
     }
     // We are done.
-    ScalarToken scalarToken =
-        new ScalarToken(stringBuilder.toString(), false, style, startMark, endMark);
+    ScalarToken scalarToken = new ScalarToken(stringBuilder.toString(), false, style, startMark,
+        endMark, Optional.of(rawBuilder.toString()));
     return makeTokenList(commentToken, scalarToken);
   }
 
@@ -1777,24 +1786,35 @@ public final class ScannerImpl implements Scanner {
     // by the first character in the entry (supplied)
     final boolean doubleValue = style == ScalarStyle.DOUBLE_QUOTED;
     StringBuilder chunks = new StringBuilder();
+    StringBuilder raw = new StringBuilder();
+
     Optional<Mark> startMark = reader.getMark();
     int quote = reader.peek();
+
+    // 记录起始引号
+    raw.appendCodePoint(quote);
     reader.forward();
-    scanFlowScalarNonSpaces(doubleValue, startMark, chunks);
+
+    scanFlowScalarNonSpaces(doubleValue, startMark, chunks, raw);
+
     while (reader.peek() != quote) {
-      scanFlowScalarSpaces(startMark, chunks);
-      scanFlowScalarNonSpaces(doubleValue, startMark, chunks);
+      scanFlowScalarSpaces(startMark, chunks, raw);
+      scanFlowScalarNonSpaces(doubleValue, startMark, chunks, raw);
     }
+
+    // 记录结束引号
+    raw.appendCodePoint(quote);
     reader.forward();
     Optional<Mark> endMark = reader.getMark();
-    return new ScalarToken(chunks.toString(), false, style, startMark, endMark);
+    return new ScalarToken(chunks.toString(), false, style, startMark, endMark,
+        Optional.of(raw.toString()));
   }
 
   /**
    * Scan some number of flow-scalar non-space characters.
    */
   private void scanFlowScalarNonSpaces(boolean doubleQuoted, Optional<Mark> startMark,
-      StringBuilder chunks) {
+      StringBuilder chunks, StringBuilder raw) {
     // See the specification for details.
     while (true) {
       // Scan through any number of characters which are not: NUL, blank,
@@ -1804,18 +1824,23 @@ public final class ScannerImpl implements Scanner {
         length++;
       }
       if (length != 0) {
-        chunks.append(reader.prefixForward(length));
+        String prefixForward = reader.prefixForward(length);
+        raw.append(prefixForward);
+        chunks.append(prefixForward);
       }
       // Depending on our quoting-type, the characters ', " and \ have
       // differing meanings.
       int c = reader.peek();
       if (!doubleQuoted && c == '\'' && reader.peek(1) == '\'') {
         chunks.append('\'');
+        raw.append("''");
         reader.forward(2);
       } else if ((doubleQuoted && c == '\'') || (!doubleQuoted && "\"\\".indexOf(c) != -1)) {
         chunks.appendCodePoint(c);
+        raw.appendCodePoint(c);
         reader.forward();
       } else if (doubleQuoted && c == '\\') {
+        raw.append('\\');
         reader.forward();
         c = reader.peek();
         if (!Character.isSupplementaryCodePoint(c) && ESCAPE_REPLACEMENTS.containsKey((char) c)) {
@@ -1823,11 +1848,13 @@ public final class ScannerImpl implements Scanner {
           // types; these are replaced with a literal character
           // from the mapping.
           chunks.append(ESCAPE_REPLACEMENTS.get((char) c));
+          raw.appendCodePoint(c);
           reader.forward();
         } else if (!Character.isSupplementaryCodePoint(c) && ESCAPE_CODES.containsKey((char) c)) {
           // The character is a multi-digit escape sequence, with
           // length defined by the value in the ESCAPE_CODES map.
           length = ESCAPE_CODES.get((char) c);
+          raw.appendCodePoint(c);
           reader.forward();
           String hex = reader.prefix(length);
           if (NOT_HEXA.matcher(hex).find()) {
@@ -1835,6 +1862,7 @@ public final class ScannerImpl implements Scanner {
                 "expected escape sequence of " + length + " hexadecimal numbers, but found: " + hex,
                 reader.getMark());
           }
+          raw.append(hex);
           int decimal = Integer.parseInt(hex, 16);
           try {
             chunks.appendCodePoint(decimal);
@@ -1849,6 +1877,7 @@ public final class ScannerImpl implements Scanner {
           // become part of the content.
           // (this is confusing, because \t is more readable than \TAB)
           chunks.append('\t');
+          raw.append('\t');
           reader.forward();
         } else if (scanLineBreak().isPresent()) {
           chunks.append(scanFlowScalarBreaks(startMark));
@@ -1863,7 +1892,8 @@ public final class ScannerImpl implements Scanner {
     }
   }
 
-  private void scanFlowScalarSpaces(Optional<Mark> startMark, StringBuilder chunks) {
+  private void scanFlowScalarSpaces(Optional<Mark> startMark, StringBuilder chunks,
+      StringBuilder raw) {
     // See the specification for details.
     int length = 0;
     // Scan through any number of whitespace (space, tab) characters,
@@ -1872,6 +1902,7 @@ public final class ScannerImpl implements Scanner {
       length++;
     }
     String whitespaces = reader.prefixForward(length);
+    raw.append(whitespaces);
     int c = reader.peek();
     if (c == 0) {
       // A flow scalar cannot end with an end-of-stream
@@ -1879,9 +1910,9 @@ public final class ScannerImpl implements Scanner {
           "found unexpected end of stream", reader.getMark());
     }
     // If we encounter a line break, scan it into our assembled string...
-    Optional<String> lineBreakOpt = scanLineBreak();
+    Optional<String> lineBreakOpt = scanLineBreakRaw(raw);
     if (lineBreakOpt.isPresent()) {
-      String breaks = scanFlowScalarBreaks(startMark);
+      String breaks = scanFlowScalarBreaks(startMark, raw);
       if (!"\n".equals(lineBreakOpt.get())) {
         chunks.append(lineBreakOpt.get());
       } else if (breaks.isEmpty()) {
@@ -1909,6 +1940,40 @@ public final class ScannerImpl implements Scanner {
       while (" \t".indexOf(reader.peek()) != -1) {
         reader.forward();
       }
+      // If we stopped at a line break, add that; otherwise, return the
+      // assembled set of scalar breaks.
+      Optional<String> lineBreakOpt = scanLineBreak();
+      if (lineBreakOpt.isPresent()) {
+        chunks.append(lineBreakOpt.get());
+      } else {
+        return chunks.toString();
+      }
+    }
+  }
+
+  // 额外给 raw 记录了前面缩进的空格;
+  private String scanFlowScalarBreaks(Optional<Mark> startMark, StringBuilder raw) {
+    // See the specification for details.
+    StringBuilder chunks = new StringBuilder();
+    while (true) {
+      // Instead of checking indentation, we check for document
+      // separators.
+      String prefix = reader.prefix(3);
+      if (("---".equals(prefix) || "...".equals(prefix))
+          && CharConstants.NULL_BL_T_LINEBR.has(reader.peek(3))) {
+        throw new ScannerException("while scanning a quoted scalar", startMark,
+            "found unexpected document separator", reader.getMark());
+      }
+
+      // Scan past any number of spaces and tabs, ignoring them
+      int len = 0;
+      while (" \t".indexOf(reader.peek(len)) != -1) {
+        len++;
+      }
+      if (len > 0) {
+        raw.append(reader.prefixForward(len));
+      }
+
       // If we stopped at a line break, add that; otherwise, return the
       // assembled set of scalar breaks.
       Optional<String> lineBreakOpt = scanLineBreak();
@@ -2227,6 +2292,29 @@ public final class ScannerImpl implements Scanner {
       } else {
         reader.forward();
       }
+      return Optional.of("\n");
+    }
+    return Optional.empty();
+  }
+
+  private Optional<String> scanLineBreakRaw(StringBuilder raw) {
+    int c = reader.peek();
+    if (c == '\r') {
+      if (reader.peek(1) == '\n') {
+        raw.append("\r\n");
+        reader.forward(2);
+      } else {
+        raw.append('\r');
+        reader.forward();
+      }
+      return Optional.of("\n");
+    } else if (c == '\n') {
+      raw.append('\n');
+      reader.forward();
+      return Optional.of("\n");
+    } else if (c == '\u0085') {
+      raw.appendCodePoint(c);
+      reader.forward();
       return Optional.of("\n");
     }
     return Optional.empty();

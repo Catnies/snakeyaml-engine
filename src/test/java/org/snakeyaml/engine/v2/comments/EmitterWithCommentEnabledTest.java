@@ -380,23 +380,23 @@ public class EmitterWithCommentEnabledTest {
         new CommentEvent(CommentType.BLOCK, " I'm first", Optional.empty(), Optional.empty()));
     ImplicitTuple allImplicit = new ImplicitTuple(true, true);
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "a", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "a", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "Hello", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "Hello", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "b", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "b", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new MappingStartEvent(Optional.empty(), Optional.of("yaml.org,2002:map"), true,
         FlowStyle.FLOW, Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "one", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "one", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "World", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "World", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter
         .emit(new CommentEvent(CommentType.BLOCK, " also me", Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "two", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "two", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "eee", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "eee", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new MappingEndEvent(Optional.empty(), Optional.empty()));
     emitter.emit(new MappingEndEvent(Optional.empty(), Optional.empty()));
     emitter.emit(new DocumentEndEvent(false, Optional.empty(), Optional.empty()));
@@ -444,10 +444,10 @@ public class EmitterWithCommentEnabledTest {
         FlowStyle.FLOW, Optional.empty(), Optional.empty()));
     emitter.emit(new CommentEvent(CommentType.BLOCK, " red", Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "one", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "one", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new CommentEvent(CommentType.BLOCK, " blue", Optional.empty(), Optional.empty()));
     emitter.emit(new ScalarEvent(Optional.empty(), Optional.of("yaml.org,2002:str"), allImplicit,
-        "two", ScalarStyle.PLAIN, Optional.empty(), Optional.empty()));
+        "two", ScalarStyle.PLAIN, Optional.empty(), Optional.empty(), Optional.empty()));
     emitter.emit(new SequenceEndEvent(Optional.empty(), Optional.empty()));
     emitter.emit(new DocumentEndEvent(false, Optional.empty(), Optional.empty()));
     emitter.emit(new StreamEndEvent(Optional.empty(), Optional.empty()));

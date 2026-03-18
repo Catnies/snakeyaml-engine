@@ -241,7 +241,7 @@ public class Composer implements Iterator<Node> {
       nodeTag = new Tag(tag.get());
     }
     Node node = new ScalarNode(nodeTag, resolved, ev.getValue(), ev.getScalarStyle(),
-        ev.getStartMark(), ev.getEndMark());
+        ev.getStartMark(), ev.getEndMark(), ev.getRawText());
     anchor.ifPresent(a -> registerAnchor(a, node));
     node.setBlockComments(blockComments);
     node.setInLineComments(inlineCommentsCollector.collectEvents().consume());

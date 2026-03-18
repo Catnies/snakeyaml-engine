@@ -43,13 +43,10 @@ class SerializeTest {
         serialize.serializeOne(new ScalarNode(Tag.STR, "a", ScalarStyle.PLAIN));
     List<Event> list = Lists.newArrayList(events);
     assertEquals(5, list.size());
-    TestUtils
-        .compareEvents(
-            Lists.newArrayList(new StreamStartEvent(),
-                new DocumentStartEvent(false, Optional.empty(), new HashMap<>()),
-                new ScalarEvent(Optional.empty(), Optional.empty(), new ImplicitTuple(false, false),
-                    "a", ScalarStyle.PLAIN),
-                new DocumentEndEvent(false), new StreamEndEvent()),
-            list);
+    TestUtils.compareEvents(Lists.newArrayList(new StreamStartEvent(),
+        new DocumentStartEvent(false, Optional.empty(), new HashMap<>()),
+        new ScalarEvent(Optional.empty(), Optional.empty(), new ImplicitTuple(false, false), "a",
+            ScalarStyle.PLAIN, Optional.empty()),
+        new DocumentEndEvent(false), new StreamEndEvent()), list);
   }
 }

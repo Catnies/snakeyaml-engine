@@ -48,6 +48,7 @@ import org.snakeyaml.engine.v2.events.SequenceStartEvent;
 import org.snakeyaml.engine.v2.events.StreamEndEvent;
 import org.snakeyaml.engine.v2.events.StreamStartEvent;
 import org.snakeyaml.engine.v2.exceptions.EmitterException;
+import org.snakeyaml.engine.v2.exceptions.Mark;
 import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 import org.snakeyaml.engine.v2.nodes.Tag;
 import org.snakeyaml.engine.v2.scanner.StreamReader;
@@ -717,9 +718,27 @@ public final class Emitter implements Emitable {
       if (!this.first && event.getEventId() == Event.ID.SequenceEnd) {
         indent = indents.pop();
         state = states.pop();
-      } else if (event instanceof CommentEvent) {
+      }
+      // 收集属于当前项的注释
+      else if (event instanceof CommentEvent) {
         blockCommentsCollector.collectEvents(event);
-      } else {
+      }
+      else {
+        if (!blockCommentsCollector.isEmpty()) {
+          // 计算 '-' 的额外缩进
+          int extraIndent = (!indentWithIndicator || this.first) ? indicatorIndent : 0;
+          // 临时加上额外缩进, 让输出的注释和下面的 - 对齐
+          if (extraIndent > 0) {
+            indent += extraIndent;
+          }
+          writeBlockComment();
+          // 恢复正常缩进级别
+          if (extraIndent > 0) {
+            indent -= extraIndent;
+          }
+        }
+
+        // 然后正常处理
         writeIndent();
         if (!indentWithIndicator || this.first) {
           writeWhitespace(indicatorIndent);
@@ -728,24 +747,8 @@ public final class Emitter implements Emitable {
         if (indentWithIndicator && this.first) {
           indent += indicatorIndent;
         }
-        if (!blockCommentsCollector.isEmpty()) {
-          increaseIndent(false, false);
-          writeBlockComment();
-          if (event instanceof ScalarEvent) {
-            ScalarEvent scalarEvent = (ScalarEvent) event;
-            if (analysis == null) {
-              analysis = analyzeScalar(scalarEvent.getValue());
-            }
-            if (scalarStyle == null) {
-              scalarStyle = chooseScalarStyle(scalarEvent);
-            }
-            if (!analysis.isEmpty() || scalarStyle == ScalarStyle.SINGLE_QUOTED
-                || scalarStyle == ScalarStyle.DOUBLE_QUOTED) {
-              writeIndent();
-            }
-          }
-          indent = indents.pop();
-        }
+
+        // 继续解析
         states.push(new ExpectBlockSequenceItem(false));
         expectNode(false, false, false);
         inlineCommentsCollector.collectEvents();
@@ -1002,26 +1005,38 @@ public final class Emitter implements Emitable {
     if (analysis == null) {
       analysis = analyzeScalar(ev.getValue());
     }
-    boolean split = !simpleKeyContext && splitLines;
-    switch (scalarStyle) {
-      case PLAIN:
-        writePlain(analysis.getScalar(), split);
-        break;
-      case DOUBLE_QUOTED:
-        writeDoubleQuoted(analysis.getScalar(), split);
-        break;
-      case SINGLE_QUOTED:
-        writeSingleQuoted(analysis.getScalar(), split);
-        break;
-      case FOLDED:
-        writeFolded(analysis.getScalar(), split);
-        break;
-      case LITERAL:
-        writeLiteral(analysis.getScalar());
-        break;
-      default:
-        throw new YamlEngineException("Unexpected scalarStyle: " + scalarStyle);
+
+    // 如果有默认值就使用
+    if (ev.getRawText().isPresent()) {
+      String writeText = ev.getRawText().get();
+      // 在每个 /n 之后移除 4 个空格
+      if (writeText.indexOf('\n') != -1) {
+        writeText = removeIndention(ev.getRawText().get(), indent);
+      }
+      writePlain(writeText, false);
+    } else {
+      boolean split = !simpleKeyContext && splitLines;
+      switch (scalarStyle) {
+        case PLAIN:
+          writePlain(analysis.getScalar(), split);
+          break;
+        case DOUBLE_QUOTED:
+          writeDoubleQuoted(analysis.getScalar(), split);
+          break;
+        case SINGLE_QUOTED:
+          writeSingleQuoted(analysis.getScalar(), split);
+          break;
+        case FOLDED:
+          writeFolded(analysis.getScalar(), split);
+          break;
+        case LITERAL:
+          writeLiteral(analysis.getScalar());
+          break;
+        default:
+          throw new YamlEngineException("Unexpected scalarStyle: " + scalarStyle);
+      }
     }
+
     // reset scalar style for another scalar
     analysis = null;
     scalarStyle = null;
@@ -1709,9 +1724,10 @@ public final class Emitter implements Emitable {
         }
       } else if (breaks) {
         if (CharConstants.LINEBR.hasNo(ch)) {
-          if (text.charAt(start) == '\n') {
-            writeLineBreak(null);
-          }
+          // TODO 不知道为什么这里多处理了一次换行符?
+          // if (text.charAt(start) == '\n') {
+          // writeLineBreak(null);
+          // }
           String data = text.substring(start, end);
           for (char br : data.toCharArray()) {
             if (br == '\n') {
@@ -1739,5 +1755,31 @@ public final class Emitter implements Emitable {
       }
       end++;
     }
+  }
+
+  // 在包含换行的rawText中删除多余缩进的空格
+  private String removeIndention(String text, int indentionSize) {
+    if (text == null || text.isEmpty() || indentionSize <= 0) {
+      return text;
+    }
+
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+
+    while (i < text.length()) {
+      char ch = text.charAt(i);
+      result.append(ch);
+      i++;
+
+      if (ch == '\n') {
+        int removed = 0;
+        while (i < text.length() && text.charAt(i) == ' ' && removed < indentionSize) {
+          i++;
+          removed++;
+        }
+      }
+    }
+
+    return result.toString();
   }
 }

@@ -369,7 +369,7 @@ public class ParserImpl implements Parser {
           // Create the scalar event and set up state to emit DocumentEnd, then the comments.
           boolean implicit = tag.isEmpty();
           Event scalarEvent = new ScalarEvent(anchor, tag, new ImplicitTuple(implicit, false), "",
-              ScalarStyle.PLAIN, startMark, endMark);
+              ScalarStyle.PLAIN, startMark, endMark, Optional.empty());
           // Pop states to maintain stack consistency (normally ParseDocumentEnd would be popped)
           states.pop();
           // The next state should emit DocumentEnd, then the collected comments, then continue
@@ -395,7 +395,7 @@ public class ParserImpl implements Parser {
             implicitValues = new ImplicitTuple(false, false);
           }
           event = new ScalarEvent(anchor, tag, implicitValues, token.getValue(), token.getStyle(),
-              startMark, endMark);
+              startMark, endMark, token.getRawText());
           state = Optional.of(states.pop());
         } else if (scanner.checkToken(Token.ID.FlowSequenceStart)) {
           endMark = scanner.peekToken().getEndMark();
@@ -417,7 +417,7 @@ public class ParserImpl implements Parser {
         } else if (anchor.isPresent() || tag.isPresent()) {
           // Empty scalars are allowed even if a tag or an anchor is specified.
           event = new ScalarEvent(anchor, tag, new ImplicitTuple(implicit, false), "",
-              ScalarStyle.PLAIN, startMark, endMark);
+              ScalarStyle.PLAIN, startMark, endMark, Optional.empty());
           state = Optional.of(states.pop());
         } else {
           Token token = scanner.peekToken();
@@ -440,7 +440,7 @@ public class ParserImpl implements Parser {
    */
   private Event processEmptyScalar(Optional<Mark> mark) {
     return new ScalarEvent(Optional.empty(), Optional.empty(), new ImplicitTuple(true, false), "",
-        ScalarStyle.PLAIN, mark, mark);
+        ScalarStyle.PLAIN, mark, mark, Optional.empty());
   }
 
   private Optional<Mark> markPop() {
@@ -1144,7 +1144,7 @@ public class ParserImpl implements Parser {
           implicitValues = new ImplicitTuple(false, false);
         }
         event = new ScalarEvent(anchor, tag, implicitValues, token.getValue(), token.getStyle(),
-            startMark, endMark);
+            startMark, endMark, token.getRawText());
         state = Optional.of(nextState);
       } else if (scanner.checkToken(Token.ID.FlowSequenceStart)) {
         endMark = scanner.peekToken().getEndMark();
@@ -1169,7 +1169,7 @@ public class ParserImpl implements Parser {
       } else if (anchor.isPresent() || tag.isPresent()) {
         // Empty scalars are allowed even if a tag or an anchor is specified.
         event = new ScalarEvent(anchor, tag, new ImplicitTuple(implicit, false), "",
-            ScalarStyle.PLAIN, startMark, endMark);
+            ScalarStyle.PLAIN, startMark, endMark, Optional.empty());
         state = Optional.of(nextState);
       } else {
         Token token = scanner.peekToken();
