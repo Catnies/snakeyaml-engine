@@ -18,7 +18,7 @@ public class SnakeYamlTest {
         SnakeYamlTest
           .class
           .getClassLoader()
-          .getResourceAsStream("input2.yml");
+          .getResourceAsStream("input.yml");
 
     LoadSettings settings = LoadSettings.builder().setParseComments(true).build();
     Compose compose = new Compose(settings);

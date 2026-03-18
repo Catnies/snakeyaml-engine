@@ -1530,7 +1530,7 @@ public final class ScannerImpl implements Scanner {
     // Scan the header.
     reader.forward();
     // 这里是补全 |- 的开头文本
-    rawBuilder.append(style.toString()).append(reader.peek() == 45 ? "-" : "").append("\n");
+    rawBuilder.append(style.toString()).append(reader.peek() == 45 ? "-" : reader.peek() == 43 ? "+" : "").append("\n");
     Chomping chomping = scanBlockScalarIndicators(startMark);
     CommentToken commentToken = scanBlockScalarIgnoredLine(startMark);
 
@@ -2024,7 +2024,8 @@ public final class ScannerImpl implements Scanner {
       }
       this.allowSimpleKey = false;
       chunks.append(spaces);
-      chunks.append(reader.prefixForward(length));
+      String prefixForward = reader.prefixForward(length);
+      chunks.append(prefixForward);
       endMark = reader.getMark();
       spaces = scanPlainSpaces();
       if (spaces.isEmpty() || reader.peek() == '#'

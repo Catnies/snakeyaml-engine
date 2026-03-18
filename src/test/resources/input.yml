@@ -12,6 +12,9 @@ test: &test
   quoted: "So does this
               quoted 
           scalar.\n"
+  "break:line": So does this
+              quoted 
+          scalar.\n
   string_literal: | # 注释
     123
     321
