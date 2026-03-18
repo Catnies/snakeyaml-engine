@@ -1006,8 +1006,13 @@ public final class Emitter implements Emitable {
       analysis = analyzeScalar(ev.getValue());
     }
 
-    // 如果有默认值就使用
-    if (ev.getRawText().isPresent()) {
+    // 查一下什么类型风格的的Scalar.
+    boolean jkh = scalarStyle.equals(ScalarStyle.FOLDED);
+    boolean sx = scalarStyle.equals(ScalarStyle.LITERAL);
+    boolean simpleText = !(jkh || sx);
+
+    // 如果有默认值并且不是 | 开头的节点就使用
+    if (ev.getRawText().isPresent() && simpleText) {
       String writeText = ev.getRawText().get();
       // 在每个 /n 之后移除 4 个空格
       if (writeText.indexOf('\n') != -1) {

@@ -15,7 +15,10 @@ public class SnakeYamlTest {
   public static void main(String[] args) throws IOException {
 
     InputStream resource =
-        SnakeYamlTest.class.getClassLoader().getResourceAsStream("input.yml");
+        SnakeYamlTest
+          .class
+          .getClassLoader()
+          .getResourceAsStream("input2.yml");
 
     LoadSettings settings = LoadSettings.builder().setParseComments(true).build();
     Compose compose = new Compose(settings);
