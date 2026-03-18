@@ -27,9 +27,12 @@ public final class ScalarToken extends Token {
   // 保存原始文本
   private Optional<String> rawText;
 
-  public ScalarToken(String value, boolean plain, Optional<Mark> startMark,
-      Optional<Mark> endMark) {
+  public ScalarToken(String value, boolean plain, Optional<Mark> startMark, Optional<Mark> endMark) {
     this(value, plain, ScalarStyle.PLAIN, startMark, endMark, Optional.empty());
+  }
+
+  public ScalarToken(String value, boolean plain, Optional<Mark> startMark, Optional<Mark> endMark, Optional<String> rawText) {
+    this(value, plain, ScalarStyle.PLAIN, startMark, endMark, rawText);
   }
 
   public ScalarToken(String value, boolean plain, ScalarStyle style, Optional<Mark> startMark,

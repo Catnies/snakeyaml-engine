@@ -1,0 +1,7 @@
+test:
+  string_folded: > # 注释1
+    123
+    321
+  string_folded_remove_end_newline: >- # 注释2
+    123
+    321
