@@ -1,0 +1,7 @@
+test:
+  string_literal_remove_end_newline: |- # 注释
+    123
+    321
+  string_literal: | # 注释
+    123
+    321
